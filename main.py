@@ -179,13 +179,18 @@ async def compare_traditional_vs_crypto(destination: str, amount: float = 1000):
                 "fee": avg_fee,
                 "total_cost": avg_rate + avg_fee
             }
-        
+
         currency_map = {
-    "MX": "MXN", "CO": "COP", "VE": "VES", "BR": "BRL", 
-    "CL": "CLP", "AR": "ARS", "PE": "PEN", "BO": "BOB"
-}
-currency = currency_map.get(destination, destination)
-crypto_rates = crypto_scraper.get_all_rates([currency])
+            "MX": "MXN", "CO": "COP", "VE": "VES", "BR": "BRL", 
+            "CL": "CLP", "AR": "ARS", "PE": "PEN", "BO": "BOB"
+        }
+
+        currency = currency_map.get(destination, destination)
+        crypto_rates = crypto_scraper.get_all_rates([currency])
+
+
+
+
         comparison = crypto_scraper.compare_with_traditional(currency, traditional_rates, crypto_rates, amount)
         
         return {

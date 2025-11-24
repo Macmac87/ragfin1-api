@@ -1,5 +1,5 @@
 """
-RAGFIN1 FastAPI Application
+RAGFIN1 FastAPI Application v2.0
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +8,7 @@ from datetime import datetime
 import os
 from dotenv import load_dotenv
 from typing import Optional, List
+from collections import defaultdict
 from ragfin1_rag import RAGEngine
 from crypto_rates_scraper import CryptoRatesScraper
 
@@ -15,8 +16,7 @@ load_dotenv()
 
 app = FastAPI(title="RAGFIN1 API", version="2.0.0")
 
-# Inicializar RAG Engine
-# Inicializar Crypto Scraper
+# Inicializar componentes
 crypto_scraper = CryptoRatesScraper()
 rag_engine = RAGEngine()
 
@@ -29,7 +29,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ==================== MODELOS PYDANTIC ====================
+# ==================== MODELOS ====================
 
 class QueryRequest(BaseModel):
     query: str
@@ -49,7 +49,7 @@ async def root():
         "name": "RAGFIN1 API",
         "version": "2.0.0",
         "status": "operational",
-        "features": ["RAG Engine", "Competitive Analysis", "Claude AI Integration"]
+        "features": ["RAG Engine", "Crypto Rates", "Competitive Analysis"]
     }
 
 @app.get("/health")
@@ -60,7 +60,7 @@ async def health():
 
 @app.post("/api/v1/rag/query")
 async def rag_query(request: QueryRequest):
-    """Query general al RAG Engine con Claude AI"""
+    """Query general al RAG Engine"""
     try:
         result = rag_engine.query(
             user_query=request.query,
@@ -74,7 +74,7 @@ async def rag_query(request: QueryRequest):
 
 @app.get("/api/v1/rag/competitive-insight/{destination}")
 async def competitive_insight(destination: str):
-    """Análisis competitivo profundo para un país usando Claude AI"""
+    """Análisis competitivo profundo usando Claude AI"""
     try:
         result = rag_engine.competitive_insight(destination)
         return result
@@ -83,7 +83,7 @@ async def competitive_insight(destination: str):
 
 @app.post("/api/v1/rag/compare")
 async def compare_providers(request: CompareRequest):
-    """Comparación directa entre providers usando Claude AI"""
+    """Comparación directa entre providers"""
     try:
         result = rag_engine.compare_providers(
             destination=request.destination,
@@ -95,39 +95,23 @@ async def compare_providers(request: CompareRequest):
 
 @app.get("/api/v1/rag/stats")
 async def rag_stats():
-    """Stats del RAG Engine (queries, tokens, costos)"""
+    """Stats del RAG Engine"""
     return rag_engine.get_stats()
 
 @app.get("/api/v1/competitive-analysis/{destination}")
 async def competitive_analysis(destination: str):
-    """Análisis competitivo numérico (sin IA) para un país"""
+    """Análisis competitivo numérico"""
     try:
         result = rag_engine.get_competitive_analysis(destination)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ==================== STARTUP EVENT ====================
-
-@app.on_event("startup")
-async def startup_event():
-    print("🚀 RAGFIN1 API v2.0 Starting...")
-    print("✅ RAG Engine initialized with Claude API")
-    records = rag_engine.load_all_data()
-    print(f"✅ {len(records)} exchange records loaded")
-    print("✅ Crypto rates scraper initialized")
-    
-    try:
-        summary = crypto_scraper.get_crypto_summary()
-        print(f"✅ Crypto coverage: USDT {summary['rates_by_coin']['USDT']['coverage_pct']}%, USDC {summary['rates_by_coin']['USDC']['coverage_pct']}%")
-    except Exception as e:
-        print(f"⚠️  Crypto scraper warning: {e}")
-
 # ==================== CRYPTO ENDPOINTS ====================
 
 @app.get("/api/v1/crypto-rates")
 async def get_crypto_rates(currencies: Optional[str] = None):
-    """Obtiene tasas actuales de USDT/USDC a monedas locales"""
+    """Obtiene tasas actuales de USDT/USDC"""
     try:
         currency_list = None
         if currencies:
@@ -156,15 +140,21 @@ async def get_crypto_summary():
 
 @app.get("/api/v1/compare-traditional-vs-crypto/{destination}")
 async def compare_traditional_vs_crypto(destination: str, amount: float = 1000):
-    """Compara costo de remesa tradicional vs crypto para un país"""
+    """Compara remesa tradicional vs crypto"""
     try:
-        from collections import defaultdict
-        
-        traditional_records = rag_engine.filter_data(destination=destination.upper(), limit=50)
+        # Obtener datos tradicionales
+        traditional_records = rag_engine.filter_data(
+            destination=destination.upper(), 
+            limit=50
+        )
         
         if not traditional_records:
-            raise HTTPException(status_code=404, detail=f"No traditional rates found for {destination}")
+            raise HTTPException(
+                status_code=404, 
+                detail=f"No traditional rates found for {destination}"
+            )
         
+        # Calcular promedios por provider
         by_provider = defaultdict(list)
         for rec in traditional_records:
             by_provider[rec.provider].append(rec)
@@ -179,19 +169,25 @@ async def compare_traditional_vs_crypto(destination: str, amount: float = 1000):
                 "fee": avg_fee,
                 "total_cost": avg_rate + avg_fee
             }
-
+        
+        # Mapeo país a moneda
         currency_map = {
             "MX": "MXN", "CO": "COP", "VE": "VES", "BR": "BRL", 
             "CL": "CLP", "AR": "ARS", "PE": "PEN", "BO": "BOB"
         }
-
+        
         currency = currency_map.get(destination, destination)
+        
+        # Obtener rates crypto
         crypto_rates = crypto_scraper.get_all_rates([currency])
-
-
-
-
-        comparison = crypto_scraper.compare_with_traditional(currency, traditional_rates, crypto_rates, amount)
+        
+        # Comparar
+        comparison = crypto_scraper.compare_with_traditional(
+            currency, 
+            traditional_rates, 
+            crypto_rates, 
+            amount
+        )
         
         return {
             "success": True,
@@ -204,6 +200,29 @@ async def compare_traditional_vs_crypto(destination: str, amount: float = 1000):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== STARTUP ====================
+
+@app.on_event("startup")
+async def startup_event():
+    print("🚀 RAGFIN1 API v2.0 Starting...")
+    print("✅ RAG Engine initialized")
+    
+    records = rag_engine.load_all_data()
+    print(f"✅ {len(records)} exchange records loaded")
+    
+    print("✅ Crypto rates scraper initialized")
+    
+    try:
+        summary = crypto_scraper.get_crypto_summary()
+        usdt_cov = summary['rates_by_coin']['USDT']['coverage_pct']
+        usdc_cov = summary['rates_by_coin']['USDC']['coverage_pct']
+        print(f"✅ Crypto coverage: USDT {usdt_cov}%, USDC {usdc_cov}%")
+    except Exception as e:
+        print(f"⚠️  Crypto scraper warning: {e}")
+
+# ==================== MAIN ====================
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

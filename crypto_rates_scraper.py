@@ -1,7 +1,7 @@
 """
 Crypto Rates Scraper para RAGFIN1
 Obtiene tasas de USDT/USDC a monedas locales
-APIs: CoinGecko (free) + Binance (free)
+APIs: CoinGecko (primary) + ExchangeRate-Host (fallback) + Binance (secondary)
 Mario @ MGA
 """
 
@@ -15,10 +15,12 @@ class CryptoRatesScraper:
     """
     Scraper de tasas crypto para remesas
     Compara USDT/USDC vs monedas fiat LatAm
+    Con triple fallback: CoinGecko → ExchangeRate-Host → Binance
     """
     
     def __init__(self):
         self.coingecko_base = "https://api.coingecko.com/api/v3"
+        self.exchangerate_base = "https://api.exchangerate.host"
         self.binance_base = "https://api.binance.com/api/v3"
         
         # Mapeo de códigos de moneda
@@ -67,13 +69,61 @@ class CryptoRatesScraper:
                     if currency_lower in values:
                         rates[coin_name][currency] = {
                             "rate": values[currency_lower],
-                            "change_24h": values.get(f"{currency_lower}_24h_change", 0)
+                            "change_24h": values.get(f"{currency_lower}_24h_change", 0),
+                            "source": "coingecko"
                         }
             
             return rates
             
         except Exception as e:
             print(f"Error fetching CoinGecko rates: {e}")
+            return {}
+    
+    def get_exchangerate_host_rates(self, currencies: List[str]) -> Dict:
+        """
+        Obtiene rates de ExchangeRate-Host (FALLBACK cuando CoinGecko falla)
+        GRATIS, sin API key, sin rate limits agresivos
+        """
+        try:
+            rates = {
+                "USDT": {},
+                "USDC": {}
+            }
+            
+            # ExchangeRate-Host usa USD como base
+            url = f"{self.exchangerate_base}/latest"
+            params = {
+                "base": "USD",
+                "symbols": ",".join(currencies)
+            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            if data.get("success"):
+                exchange_rates = data.get("rates", {})
+                
+                # Para USDT y USDC asumimos paridad 1:1 con USD
+                for currency in currencies:
+                    if currency in exchange_rates:
+                        rate_value = exchange_rates[currency]
+                        
+                        # Ambos stablecoins usan el mismo rate USD
+                        rates["USDT"][currency] = {
+                            "rate": rate_value,
+                            "source": "exchangerate-host"
+                        }
+                        rates["USDC"][currency] = {
+                            "rate": rate_value,
+                            "source": "exchangerate-host"
+                        }
+            
+            return rates
+            
+        except Exception as e:
+            print(f"Error fetching ExchangeRate-Host rates: {e}")
             return {}
     
     def get_binance_rate(self, symbol: str) -> Optional[float]:
@@ -123,20 +173,29 @@ class CryptoRatesScraper:
     
     def get_all_rates(self, currencies: Optional[List[str]] = None) -> Dict:
         """
-        Obtiene rates de todas las fuentes y las combina
+        Obtiene rates de todas las fuentes con TRIPLE FALLBACK
+        1. CoinGecko (primary)
+        2. ExchangeRate-Host (fallback si CoinGecko falla)
+        3. Binance (last resort)
         """
         if currencies is None:
             currencies = list(self.currency_map.keys())
         
         print(f"🔍 Fetching crypto rates for: {', '.join(currencies)}")
         
-        # Obtener de CoinGecko (principal)
+        # INTENTO 1: CoinGecko (principal)
         coingecko_rates = self.get_coingecko_rates(currencies)
         
-        # Obtener de Binance (secundario)
+        # INTENTO 2: ExchangeRate-Host (fallback si CoinGecko falló o está incompleto)
+        exchangerate_rates = {}
+        if not coingecko_rates or self._is_incomplete(coingecko_rates, currencies):
+            print("⚠️  CoinGecko unavailable or incomplete, using ExchangeRate-Host fallback...")
+            exchangerate_rates = self.get_exchangerate_host_rates(currencies)
+        
+        # INTENTO 3: Binance (last resort)
         binance_rates = self.get_binance_rates(currencies)
         
-        # Combinar resultados (CoinGecko tiene prioridad)
+        # Combinar resultados con prioridad: CoinGecko > ExchangeRate-Host > Binance
         combined_rates = {
             "timestamp": datetime.now().isoformat(),
             "source": "multi",
@@ -147,22 +206,44 @@ class CryptoRatesScraper:
             combined_rates["rates"][coin] = {}
             
             for currency in currencies:
-                # Preferir CoinGecko, fallback a Binance
+                # Prioridad 1: CoinGecko
                 if coin in coingecko_rates and currency in coingecko_rates[coin]:
-                    combined_rates["rates"][coin][currency] = {
-                        **coingecko_rates[coin][currency],
-                        "source": "coingecko"
-                    }
+                    combined_rates["rates"][coin][currency] = coingecko_rates[coin][currency]
+                
+                # Prioridad 2: ExchangeRate-Host
+                elif coin in exchangerate_rates and currency in exchangerate_rates[coin]:
+                    combined_rates["rates"][coin][currency] = exchangerate_rates[coin][currency]
+                
+                # Prioridad 3: Binance
                 elif coin in binance_rates and currency in binance_rates[coin]:
                     combined_rates["rates"][coin][currency] = binance_rates[coin][currency]
+                
+                # No hay data disponible
                 else:
-                    # No hay data disponible
                     combined_rates["rates"][coin][currency] = {
                         "rate": None,
                         "source": "unavailable"
                     }
         
         return combined_rates
+    
+    def _is_incomplete(self, rates: Dict, currencies: List[str]) -> bool:
+        """
+        Verifica si los rates están incompletos (faltan monedas)
+        """
+        if not rates:
+            return True
+        
+        for coin in ["USDT", "USDC"]:
+            if coin not in rates:
+                return True
+            
+            coin_rates = rates[coin]
+            for currency in currencies:
+                if currency not in coin_rates or coin_rates[currency].get("rate") is None:
+                    return True
+        
+        return False
     
     def compare_with_traditional(self, country: str, traditional_rates: Dict, 
                                  crypto_rates: Dict, amount: float = 1000) -> Dict:

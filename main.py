@@ -202,7 +202,21 @@ async def startup_event():
         print(f"⚠️ Crypto scraper warning: {e}")
 
 # ==================== MAIN ====================
-
+@app.get("/api/v1/binance-p2p/{destination}")
+async def get_binance_p2p_rate(destination: str, amount: float = 1000):
+    """Obtiene tasa P2P de Binance para un país"""
+    from binance_p2p_scraper import BinanceP2PScraper
+    
+    try:
+        scraper = BinanceP2PScraper()
+        result = scraper.compare_with_traditional(destination.upper(), amount)
+        
+        return {
+            "success": True,
+            "data": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

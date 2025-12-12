@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   getCompetitiveAnalysis, 
   getCompetitiveInsight, 
@@ -31,7 +31,7 @@ function App() {
 
   const currentCorridor = corridors.find(c => c.code === corridor);
 
-  const fetchAllData = async (dest) => {
+  const fetchAllData = useCallback(async (dest) => {
     setLoading(true);
     setErrors({});
     
@@ -73,7 +73,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentCorridor]);
 
   useEffect(() => {
     fetchAllData(corridor);

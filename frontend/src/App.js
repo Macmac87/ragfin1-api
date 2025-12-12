@@ -73,7 +73,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [currentCorridor]);
+  }, [currentCorridor, amount]);
 
   useEffect(() => {
     fetchAllData(corridor);

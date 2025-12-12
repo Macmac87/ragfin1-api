@@ -228,7 +228,7 @@ async def get_binance_p2p_rate(destination: str, amount: float = 1000):
 # ==================== STATIC FILES & FRONTEND ====================
 
 # Montar archivos estáticos del frontend
-static_path = os.path.join(os.path.dirname(__file__), "..", "frontend", "build")
+static_path = os.path.join(os.path.dirname(__file__), "frontend", "build")
 
 if os.path.exists(static_path):
     # Servir archivos estáticos (CSS, JS, imágenes)

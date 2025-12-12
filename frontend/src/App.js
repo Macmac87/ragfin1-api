@@ -77,7 +77,7 @@ function App() {
 
   useEffect(() => {
     fetchAllData(corridor);
-  }, [corridor]);
+  }, [corridor, fetchAllData]);
 
   return (
     <div className="app">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   getCompetitiveAnalysis, 
   getCompetitiveInsight, 
@@ -9,7 +9,7 @@ import './App.css';
 
 function App() {
   const [corridor, setCorridor] = useState('MX');
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState({});
   
@@ -17,6 +17,8 @@ function App() {
   const [insightData, setInsightData] = useState(null);
   const [binanceData, setBinanceData] = useState(null);
   const [cryptoData, setCryptoData] = useState(null);
+
+  const isFetchingRef = useRef(false);
 
   const corridors = [
     { code: 'MX', name: 'Mexico', currency: 'MXN', flag: '🇲🇽' },
@@ -32,14 +34,23 @@ function App() {
   const currentCorridor = corridors.find(c => c.code === corridor);
 
   const fetchAllData = useCallback(async (dest) => {
+    if (isFetchingRef.current) {
+      console.log('Already fetching, skipping...');
+      return;
+    }
+
+    isFetchingRef.current = true;
     setLoading(true);
     setErrors({});
     
     try {
+      const amountValue = amount === '' ? 1000 : parseFloat(amount);
+
       try {
         const comp = await getCompetitiveAnalysis(dest);
         setCompetitiveData(comp);
       } catch (e) {
+        console.error('Competitive analysis error:', e);
         setErrors(prev => ({ ...prev, competitive: e.message }));
         setCompetitiveData(null);
       }
@@ -48,14 +59,16 @@ function App() {
         const insight = await getCompetitiveInsight(dest);
         setInsightData(insight);
       } catch (e) {
+        console.error('Insight error:', e);
         setErrors(prev => ({ ...prev, insight: e.message }));
         setInsightData(null);
       }
 
       try {
-        const binance = await getBinanceP2P(dest, amount);
+        const binance = await getBinanceP2P(dest, amountValue);
         setBinanceData(binance);
       } catch (e) {
+        console.error('Binance error:', e);
         setErrors(prev => ({ ...prev, binance: e.message }));
         setBinanceData(null);
       }
@@ -64,6 +77,7 @@ function App() {
         const crypto = await getCryptoRates(currentCorridor?.currency || 'MXN');
         setCryptoData(crypto);
       } catch (e) {
+        console.error('Crypto error:', e);
         setErrors(prev => ({ ...prev, crypto: e.message }));
         setCryptoData(null);
       }
@@ -72,12 +86,13 @@ function App() {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   }, [currentCorridor, amount]);
 
   useEffect(() => {
     fetchAllData(corridor);
-  }, [corridor, fetchAllData]);
+  }, [corridor]);
 
   return (
     <div className="app">
@@ -116,7 +131,7 @@ function App() {
               value={amount} 
               onChange={(e) => {
                 const val = e.target.value.replace(/[^0-9.]/g, '');
-                if (val === '' || !isNaN(val)) setAmount(val === '' ? 0 : parseFloat(val));
+                if (val === '' || !isNaN(val)) setAmount(val);
               }}
               className="input"
               placeholder="1000.00"
@@ -208,7 +223,7 @@ function App() {
 
           <section className="endpoint-section">
             <div className="section-header">
-              <h2>ENDPOINT: /api/v1/binance-p2p/{corridor}?amount={amount}</h2>
+              <h2>ENDPOINT: /api/v1/binance-p2p/{corridor}?amount={amount || 1000}</h2>
               <span className="badge crypto">CRYPTO P2P</span>
             </div>
             
@@ -231,7 +246,7 @@ function App() {
   <div className="stat-value">
     {binanceData.data.recipient_receives ? binanceData.data.recipient_receives.toLocaleString() : '0'} {currentCorridor.currency}
   </div>
-  <div className="stat-detail">For ${amount || 0} USD</div>
+  <div className="stat-detail">For ${amount || 1000} USD</div>
 </div>
                   
                   <div className="stat-box">

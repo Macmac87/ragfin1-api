@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   getCompetitiveAnalysis, 
   getCompetitiveInsight, 
@@ -17,8 +17,6 @@ function App() {
   const [binanceData, setBinanceData] = useState(null);
   const [cryptoData, setCryptoData] = useState(null);
 
-  const hasLoadedRef = useRef(false);
-
   const corridors = [
     { code: 'MX', name: 'Mexico', currency: 'MXN', flag: '🇲🇽' },
     { code: 'CO', name: 'Colombia', currency: 'COP', flag: '🇨🇴' },
@@ -33,12 +31,8 @@ function App() {
   const currentCorridor = corridors.find(c => c.code === corridor);
 
   useEffect(() => {
-    if (hasLoadedRef.current) {
-      hasLoadedRef.current = false;
-      return;
-    }
-
-    hasLoadedRef.current = true;
+    let cancelled = false;
+    
     setLoading(true);
 
     const amountValue = amount === '' ? 1000 : parseFloat(amount);
@@ -50,12 +44,18 @@ function App() {
       getBinanceP2P(corridor, amountValue).catch(() => null),
       getCryptoRates(curr?.currency || 'MXN').catch(() => null)
     ]).then(([comp, insight, binance, crypto]) => {
-      setCompetitiveData(comp);
-      setInsightData(insight);
-      setBinanceData(binance);
-      setCryptoData(crypto);
-      setLoading(false);
+      if (!cancelled) {
+        setCompetitiveData(comp);
+        setInsightData(insight);
+        setBinanceData(binance);
+        setCryptoData(crypto);
+        setLoading(false);
+      }
     });
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [corridor]);
 

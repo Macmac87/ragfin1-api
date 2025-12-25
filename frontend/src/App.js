@@ -144,7 +144,7 @@ function App() {
             
             {!competitiveData ? (
               <div className="no-data">NO DATA AVAILABLE</div>
-            ) : competitiveData?.numerical_analysis ? (
+            ) : competitiveData?.most_competitive ? (
               <div className="content">
                 <div className="stats-row">
                   <div className="stat-box leader">

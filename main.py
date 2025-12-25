@@ -50,14 +50,6 @@ class CompareRequest(BaseModel):
 
 # ==================== ENDPOINTS BÁSICOS ====================
 
-@app.get("/")
-async def root():
-    return {
-        "name": "RAGFIN1 API",
-        "version": "2.0.0",
-        "status": "operational",
-        "features": ["RAG Engine", "Crypto Rates", "Competitive Analysis"]
-    }
 
 @app.get("/health")
 async def health():

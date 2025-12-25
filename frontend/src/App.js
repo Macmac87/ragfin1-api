@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   getCompetitiveAnalysis, 
   getCompetitiveInsight, 
@@ -33,66 +33,123 @@ function App() {
 
   const currentCorridor = corridors.find(c => c.code === corridor);
 
-  const fetchAllData = useCallback(async (dest) => {
-    if (isFetchingRef.current) {
-      console.log('Already fetching, skipping...');
-      return;
-    }
-
-    isFetchingRef.current = true;
-    setLoading(true);
-    setErrors({});
-    
-    try {
-      const amountValue = amount === '' ? 1000 : parseFloat(amount);
-
-      try {
-        const comp = await getCompetitiveAnalysis(dest);
-        setCompetitiveData(comp);
-      } catch (e) {
-        console.error('Competitive analysis error:', e);
-        setErrors(prev => ({ ...prev, competitive: e.message }));
-        setCompetitiveData(null);
-      }
-
-      try {
-        const insight = await getCompetitiveInsight(dest);
-        setInsightData(insight);
-      } catch (e) {
-        console.error('Insight error:', e);
-        setErrors(prev => ({ ...prev, insight: e.message }));
-        setInsightData(null);
-      }
-
-      try {
-        const binance = await getBinanceP2P(dest, amountValue);
-        setBinanceData(binance);
-      } catch (e) {
-        console.error('Binance error:', e);
-        setErrors(prev => ({ ...prev, binance: e.message }));
-        setBinanceData(null);
-      }
-
-      try {
-        const crypto = await getCryptoRates(currentCorridor?.currency || 'MXN');
-        setCryptoData(crypto);
-      } catch (e) {
-        console.error('Crypto error:', e);
-        setErrors(prev => ({ ...prev, crypto: e.message }));
-        setCryptoData(null);
-      }
-
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-      isFetchingRef.current = false;
-    }
-  }, [currentCorridor, amount]);
-
   useEffect(() => {
-    fetchAllData(corridor);
+    const fetchAllData = async () => {
+      if (isFetchingRef.current) {
+        console.log('Already fetching, skipping...');
+        return;
+      }
+
+      isFetchingRef.current = true;
+      setLoading(true);
+      setErrors({});
+      
+      try {
+        const amountValue = amount === '' ? 1000 : parseFloat(amount);
+        const curr = corridors.find(c => c.code === corridor);
+
+        try {
+          const comp = await getCompetitiveAnalysis(corridor);
+          setCompetitiveData(comp);
+        } catch (e) {
+          console.error('Competitive analysis error:', e);
+          setErrors(prev => ({ ...prev, competitive: e.message }));
+          setCompetitiveData(null);
+        }
+
+        try {
+          const insight = await getCompetitiveInsight(corridor);
+          setInsightData(insight);
+        } catch (e) {
+          console.error('Insight error:', e);
+          setErrors(prev => ({ ...prev, insight: e.message }));
+          setInsightData(null);
+        }
+
+        try {
+          const binance = await getBinanceP2P(corridor, amountValue);
+          setBinanceData(binance);
+        } catch (e) {
+          console.error('Binance error:', e);
+          setErrors(prev => ({ ...prev, binance: e.message }));
+          setBinanceData(null);
+        }
+
+        try {
+          const crypto = await getCryptoRates(curr?.currency || 'MXN');
+          setCryptoData(crypto);
+        } catch (e) {
+          console.error('Crypto error:', e);
+          setErrors(prev => ({ ...prev, crypto: e.message }));
+          setCryptoData(null);
+        }
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+        isFetchingRef.current = false;
+      }
+    };
+
+    fetchAllData();
   }, [corridor]);
+
+  const handleRefresh = () => {
+    if (!isFetchingRef.current) {
+      setLoading(true);
+      const fetchData = async () => {
+        if (isFetchingRef.current) return;
+        
+        isFetchingRef.current = true;
+        setErrors({});
+        
+        try {
+          const amountValue = amount === '' ? 1000 : parseFloat(amount);
+          const curr = corridors.find(c => c.code === corridor);
+
+          try {
+            const comp = await getCompetitiveAnalysis(corridor);
+            setCompetitiveData(comp);
+          } catch (e) {
+            setErrors(prev => ({ ...prev, competitive: e.message }));
+            setCompetitiveData(null);
+          }
+
+          try {
+            const insight = await getCompetitiveInsight(corridor);
+            setInsightData(insight);
+          } catch (e) {
+            setErrors(prev => ({ ...prev, insight: e.message }));
+            setInsightData(null);
+          }
+
+          try {
+            const binance = await getBinanceP2P(corridor, amountValue);
+            setBinanceData(binance);
+          } catch (e) {
+            setErrors(prev => ({ ...prev, binance: e.message }));
+            setBinanceData(null);
+          }
+
+          try {
+            const crypto = await getCryptoRates(curr?.currency || 'MXN');
+            setCryptoData(crypto);
+          } catch (e) {
+            setErrors(prev => ({ ...prev, crypto: e.message }));
+            setCryptoData(null);
+          }
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        } finally {
+          setLoading(false);
+          isFetchingRef.current = false;
+        }
+      };
+      
+      fetchData();
+    }
+  };
 
   return (
     <div className="app">
@@ -110,11 +167,11 @@ function App() {
             <span className="flag">🇺🇸</span>
             <span className="arrow">→</span>
             <select 
-  value={corridor} 
-  onChange={(e) => setCorridor(e.target.value)}
-  className="select"
-  onWheel={(e) => e.target.blur()}
->
+              value={corridor} 
+              onChange={(e) => setCorridor(e.target.value)}
+              className="select"
+              onWheel={(e) => e.target.blur()}
+            >
               {corridors.map(c => (
                 <option key={c.code} value={c.code}>
                   {c.flag} {c.name} ({c.currency})
@@ -138,7 +195,7 @@ function App() {
             />
           </div>
 
-          <button onClick={() => fetchAllData(corridor)} className="refresh-btn" disabled={loading}>
+          <button onClick={handleRefresh} className="refresh-btn" disabled={loading}>
             {loading ? '⏳' : '🔄'} {loading ? 'Loading...' : 'Refresh'}
           </button>
         </div>
@@ -242,12 +299,12 @@ function App() {
                   </div>
                   
                   <div className="stat-box">
-  <div className="stat-label">RECIPIENT RECEIVES</div>
-  <div className="stat-value">
-    {binanceData.data.recipient_receives ? binanceData.data.recipient_receives.toLocaleString() : '0'} {currentCorridor.currency}
-  </div>
-  <div className="stat-detail">For ${amount || 1000} USD</div>
-</div>
+                    <div className="stat-label">RECIPIENT RECEIVES</div>
+                    <div className="stat-value">
+                      {binanceData.data.recipient_receives ? binanceData.data.recipient_receives.toLocaleString() : '0'} {currentCorridor.currency}
+                    </div>
+                    <div className="stat-detail">For ${amount || 1000} USD</div>
+                  </div>
                   
                   <div className="stat-box">
                     <div className="stat-label">FEE</div>

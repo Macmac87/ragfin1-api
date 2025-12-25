@@ -7,7 +7,7 @@ export const FEATURES = {
 };
 
 // API Configuration
-export const API_BASE_URL = 'http://localhost:8000';
+export const API_BASE_URL = 'https://ragfin1.onrender.com';
 
 // Default corridor
 export const DEFAULT_CORRIDOR = 'MX';

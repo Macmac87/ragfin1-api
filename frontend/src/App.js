@@ -10,15 +10,14 @@ import './App.css';
 function App() {
   const [corridor, setCorridor] = useState('MX');
   const [amount, setAmount] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
   
   const [competitiveData, setCompetitiveData] = useState(null);
   const [insightData, setInsightData] = useState(null);
   const [binanceData, setBinanceData] = useState(null);
   const [cryptoData, setCryptoData] = useState(null);
 
-  const isFetchingRef = useRef(false);
+  const hasLoadedRef = useRef(false);
 
   const corridors = [
     { code: 'MX', name: 'Mexico', currency: 'MXN', flag: '🇲🇽' },
@@ -34,121 +33,48 @@ function App() {
   const currentCorridor = corridors.find(c => c.code === corridor);
 
   useEffect(() => {
-    const fetchAllData = async () => {
-      if (isFetchingRef.current) {
-        console.log('Already fetching, skipping...');
-        return;
-      }
+    if (hasLoadedRef.current) {
+      hasLoadedRef.current = false;
+      return;
+    }
 
-      isFetchingRef.current = true;
-      setLoading(true);
-      setErrors({});
-      
-      try {
-        const amountValue = amount === '' ? 1000 : parseFloat(amount);
-        const curr = corridors.find(c => c.code === corridor);
+    hasLoadedRef.current = true;
+    setLoading(true);
 
-        try {
-          const comp = await getCompetitiveAnalysis(corridor);
-          setCompetitiveData(comp);
-        } catch (e) {
-          console.error('Competitive analysis error:', e);
-          setErrors(prev => ({ ...prev, competitive: e.message }));
-          setCompetitiveData(null);
-        }
+    const amountValue = amount === '' ? 1000 : parseFloat(amount);
+    const curr = corridors.find(c => c.code === corridor);
 
-        try {
-          const insight = await getCompetitiveInsight(corridor);
-          setInsightData(insight);
-        } catch (e) {
-          console.error('Insight error:', e);
-          setErrors(prev => ({ ...prev, insight: e.message }));
-          setInsightData(null);
-        }
-
-        try {
-          const binance = await getBinanceP2P(corridor, amountValue);
-          setBinanceData(binance);
-        } catch (e) {
-          console.error('Binance error:', e);
-          setErrors(prev => ({ ...prev, binance: e.message }));
-          setBinanceData(null);
-        }
-
-        try {
-          const crypto = await getCryptoRates(curr?.currency || 'MXN');
-          setCryptoData(crypto);
-        } catch (e) {
-          console.error('Crypto error:', e);
-          setErrors(prev => ({ ...prev, crypto: e.message }));
-          setCryptoData(null);
-        }
-
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-        isFetchingRef.current = false;
-      }
-    };
-
-    fetchAllData();
+    Promise.all([
+      getCompetitiveAnalysis(corridor).catch(() => null),
+      getCompetitiveInsight(corridor).catch(() => null),
+      getBinanceP2P(corridor, amountValue).catch(() => null),
+      getCryptoRates(curr?.currency || 'MXN').catch(() => null)
+    ]).then(([comp, insight, binance, crypto]) => {
+      setCompetitiveData(comp);
+      setInsightData(insight);
+      setBinanceData(binance);
+      setCryptoData(crypto);
+      setLoading(false);
+    });
   }, [corridor]);
 
   const handleRefresh = () => {
-    if (!isFetchingRef.current) {
-      setLoading(true);
-      const fetchData = async () => {
-        if (isFetchingRef.current) return;
-        
-        isFetchingRef.current = true;
-        setErrors({});
-        
-        try {
-          const amountValue = amount === '' ? 1000 : parseFloat(amount);
-          const curr = corridors.find(c => c.code === corridor);
+    setLoading(true);
+    const amountValue = amount === '' ? 1000 : parseFloat(amount);
+    const curr = corridors.find(c => c.code === corridor);
 
-          try {
-            const comp = await getCompetitiveAnalysis(corridor);
-            setCompetitiveData(comp);
-          } catch (e) {
-            setErrors(prev => ({ ...prev, competitive: e.message }));
-            setCompetitiveData(null);
-          }
-
-          try {
-            const insight = await getCompetitiveInsight(corridor);
-            setInsightData(insight);
-          } catch (e) {
-            setErrors(prev => ({ ...prev, insight: e.message }));
-            setInsightData(null);
-          }
-
-          try {
-            const binance = await getBinanceP2P(corridor, amountValue);
-            setBinanceData(binance);
-          } catch (e) {
-            setErrors(prev => ({ ...prev, binance: e.message }));
-            setBinanceData(null);
-          }
-
-          try {
-            const crypto = await getCryptoRates(curr?.currency || 'MXN');
-            setCryptoData(crypto);
-          } catch (e) {
-            setErrors(prev => ({ ...prev, crypto: e.message }));
-            setCryptoData(null);
-          }
-        } catch (error) {
-          console.error('Error fetching data:', error);
-        } finally {
-          setLoading(false);
-          isFetchingRef.current = false;
-        }
-      };
-      
-      fetchData();
-    }
+    Promise.all([
+      getCompetitiveAnalysis(corridor).catch(() => null),
+      getCompetitiveInsight(corridor).catch(() => null),
+      getBinanceP2P(corridor, amountValue).catch(() => null),
+      getCryptoRates(curr?.currency || 'MXN').catch(() => null)
+    ]).then(([comp, insight, binance, crypto]) => {
+      setCompetitiveData(comp);
+      setInsightData(insight);
+      setBinanceData(binance);
+      setCryptoData(crypto);
+      setLoading(false);
+    });
   };
 
   return (
@@ -204,7 +130,7 @@ function App() {
       {loading ? (
         <div className="loading-container">
           <div className="loading-spinner">⏳</div>
-          <div className="loading-text">Loading all endpoints for {currentCorridor.name}...</div>
+          <div className="loading-text">Loading all endpoints for {currentCorridor?.name}...</div>
         </div>
       ) : (
         <div className="dashboard">
@@ -215,11 +141,8 @@ function App() {
               <span className="badge">NUMERICAL DATA</span>
             </div>
             
-            {errors.competitive ? (
-              <div className="error-box">
-                <div className="error-icon">⚠️</div>
-                <div className="error-text">ERROR: {errors.competitive}</div>
-              </div>
+            {!competitiveData ? (
+              <div className="no-data">NO DATA AVAILABLE</div>
             ) : competitiveData?.numerical_analysis ? (
               <div className="content">
                 <div className="stats-row">
@@ -284,24 +207,21 @@ function App() {
               <span className="badge crypto">CRYPTO P2P</span>
             </div>
             
-            {errors.binance ? (
-              <div className="error-box">
-                <div className="error-icon">⚠️</div>
-                <div className="error-text">ERROR: {errors.binance}</div>
-              </div>
+            {!binanceData ? (
+              <div className="no-data">NO DATA AVAILABLE</div>
             ) : binanceData?.data ? (
               <div className="content">
                 <div className="stats-row">
                   <div className="stat-box crypto">
                     <div className="stat-label">BINANCE P2P RATE</div>
-                    <div className="stat-value">{binanceData.data.exchange_rate} {currentCorridor.currency}</div>
-                    <div className="stat-detail">1 USD = {binanceData.data.exchange_rate} {currentCorridor.currency}</div>
+                    <div className="stat-value">{binanceData.data.exchange_rate} {currentCorridor?.currency}</div>
+                    <div className="stat-detail">1 USD = {binanceData.data.exchange_rate} {currentCorridor?.currency}</div>
                   </div>
                   
                   <div className="stat-box">
                     <div className="stat-label">RECIPIENT RECEIVES</div>
                     <div className="stat-value">
-                      {binanceData.data.recipient_receives ? binanceData.data.recipient_receives.toLocaleString() : '0'} {currentCorridor.currency}
+                      {binanceData.data.recipient_receives ? binanceData.data.recipient_receives.toLocaleString() : '0'} {currentCorridor?.currency}
                     </div>
                     <div className="stat-detail">For ${amount || 1000} USD</div>
                   </div>
@@ -331,15 +251,12 @@ function App() {
 
           <section className="endpoint-section">
             <div className="section-header">
-              <h2>ENDPOINT: /api/v1/crypto-rates?currencies={currentCorridor.currency}</h2>
+              <h2>ENDPOINT: /api/v1/crypto-rates?currencies={currentCorridor?.currency}</h2>
               <span className="badge crypto">STABLECOIN RATES</span>
             </div>
             
-            {errors.crypto ? (
-              <div className="error-box">
-                <div className="error-icon">⚠️</div>
-                <div className="error-text">ERROR: {errors.crypto}</div>
-              </div>
+            {!cryptoData ? (
+              <div className="no-data">NO DATA AVAILABLE</div>
             ) : cryptoData?.data?.rates ? (
               <div className="content">
                 <div className="crypto-grid">
@@ -370,11 +287,8 @@ function App() {
               <span className="badge ai">AI ANALYSIS</span>
             </div>
             
-            {errors.insight ? (
-              <div className="error-box">
-                <div className="error-icon">⚠️</div>
-                <div className="error-text">ERROR: {errors.insight}</div>
-              </div>
+            {!insightData ? (
+              <div className="no-data">NO DATA AVAILABLE</div>
             ) : insightData?.strategic_analysis ? (
               <div className="content">
                 <div className="ai-analysis-container">

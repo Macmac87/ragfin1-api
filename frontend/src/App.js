@@ -56,6 +56,7 @@ function App() {
       setCryptoData(crypto);
       setLoading(false);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [corridor]);
 
   const handleRefresh = () => {

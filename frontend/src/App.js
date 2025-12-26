@@ -151,22 +151,22 @@ function App() {
                   <div className="stat-box leader">
                     <div className="stat-label">MOST COMPETITIVE</div>
                     <div className="stat-value">
-                      ${competitiveData.numerical_analysis.most_competitive.total_cost.toFixed(2)}
+                      ${competitiveData.most_competitive.total_cost.toFixed(2)}
                     </div>
-                    <div className="stat-provider">{competitiveData.numerical_analysis.most_competitive.provider}</div>
+                    <div className="stat-provider">{competitiveData.most_competitive.provider}</div>
                   </div>
                   
                   <div className="stat-box">
                     <div className="stat-label">PROVIDERS ANALYZED</div>
-                    <div className="stat-value">{competitiveData.numerical_analysis.providers_analyzed.length}</div>
+                    <div className="stat-value">{competitiveData.providers_analyzed.length}</div>
                     <div className="stat-detail">
-                      {competitiveData.numerical_analysis.providers_analyzed.join(', ')}
+                      {competitiveData.providers_analyzed.join(', ')}
                     </div>
                   </div>
                   
                   <div className="stat-box">
                     <div className="stat-label">DATA POINTS</div>
-                    <div className="stat-value">{competitiveData.numerical_analysis.data_points}</div>
+                    <div className="stat-value">{competitiveData.data_points}</div>
                     <div className="stat-detail">Real-time records</div>
                   </div>
                 </div>
@@ -183,7 +183,7 @@ function App() {
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(competitiveData.numerical_analysis.stats_by_provider)
+                      {Object.entries(competitiveData.stats_by_provider)
                         .sort((a, b) => a[1].total_cost - b[1].total_cost)
                         .map(([provider, stats]) => (
                           <tr key={provider}>

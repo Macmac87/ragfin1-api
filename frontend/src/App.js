@@ -18,15 +18,16 @@ function App() {
   const [cryptoData, setCryptoData] = useState(null);
 
   const corridors = [
-    { code: 'MX', name: 'Mexico', currency: 'MXN', flag: '🇲🇽' },
-    { code: 'CO', name: 'Colombia', currency: 'COP', flag: '🇨🇴' },
-    { code: 'BR', name: 'Brasil', currency: 'BRL', flag: '🇧🇷' },
-    { code: 'AR', name: 'Argentina', currency: 'ARS', flag: '🇦🇷' },
-    { code: 'VE', name: 'Venezuela', currency: 'VES', flag: '🇻🇪' },
-    { code: 'CL', name: 'Chile', currency: 'CLP', flag: '🇨🇱' },
-    { code: 'PE', name: 'Peru', currency: 'PEN', flag: '🇵🇪' },
-    { code: 'BO', name: 'Bolivia', currency: 'BOB', flag: '🇧🇴' }
-  ];
+  { code: 'MX', name: 'Mexico', currency: 'MXN', flag: '🇲🇽' },
+  { code: 'CO', name: 'Colombia', currency: 'COP', flag: '🇨🇴' },
+  { code: 'BR', name: 'Brasil', currency: 'BRL', flag: '🇧🇷' },
+  { code: 'AR', name: 'Argentina', currency: 'ARS', flag: '🇦🇷' },
+  { code: 'VE', name: 'Venezuela', currency: 'VES', flag: '🇻🇪' },
+  { code: 'CL', name: 'Chile', currency: 'CLP', flag: '🇨🇱' },
+  { code: 'PE', name: 'Peru', currency: 'PEN', flag: '🇵🇪' },
+  { code: 'BO', name: 'Bolivia', currency: 'BOB', flag: '🇧🇴' },
+  { code: 'GT', name: 'Guatemala', currency: 'GTQ', flag: '🇬🇹' }
+];
 
   const currentCorridor = corridors.find(c => c.code === corridor);
 

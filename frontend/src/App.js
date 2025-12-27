@@ -26,7 +26,9 @@ function App() {
   { code: 'CL', name: 'Chile', currency: 'CLP', flag: '🇨🇱' },
   { code: 'PE', name: 'Peru', currency: 'PEN', flag: '🇵🇪' },
   { code: 'BO', name: 'Bolivia', currency: 'BOB', flag: '🇧🇴' },
-  { code: 'GT', name: 'Guatemala', currency: 'GTQ', flag: '🇬🇹' }
+  { code: 'GT', name: 'Guatemala', currency: 'GTQ', flag: '🇬🇹' },
+  { code: 'DO', name: 'Dominican Republic', currency: 'DOP', flag: '🇩🇴' },
+  { code: 'SV', name: 'El Salvador', currency: 'USD', flag: '🇸🇻' }
 ];
 
   const currentCorridor = corridors.find(c => c.code === corridor);
@@ -86,7 +88,7 @@ function App() {
           <div className="logo">
             RAGFIN<span className="accent">1</span>
           </div>
-          <div className="version">v.2.0</div>
+          <div className="version">v.3.0</div>
         </div>
         
         <div className="controls">

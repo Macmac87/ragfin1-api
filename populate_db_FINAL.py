@@ -114,10 +114,10 @@ def populate_database():
         if result.get('success'):
             row_id = db.insert_corridor_data(result)
             inserted += 1
-            p = result['provider']
-            o = result['origin']
-            d = result['destination']
-            a = result['send_amount']
+            p = result.get('provider', 'Unknown')
+            o = result.get('origin', 'US')
+            d = result.get('destination', '??')
+            a = result.get('send_amount', 0)
             print(f"✅ {p:15} {o} → {d} (${a:6.0f}) - Row {row_id}")
     
     print("=" * 60)

@@ -4,6 +4,14 @@ Populate RAGFIN1 with REAL data
 from wise_scraper_real import WiseScraperReal
 from wu_scraper_real_v2 import WesternUnionScraperReal
 from intermex_scraper_real_v2 import IntermexScraperReal
+from remitly_scraper_MX import RemitlyScraperMX
+from remitly_scraper_CO import RemitlyScraperCO
+from remitly_scraper_BR import RemitlyScraperBR
+from remitly_scraper_AR import RemitlyScraperAR
+from remitly_scraper_VE import RemitlyScraperVE
+from remitly_scraper_CL import RemitlyScraperCL
+from remitly_scraper_PE import RemitlyScraperPE
+from remitly_scraper_BO import RemitlyScraperBO
 from ragfin1_db import RAGFIN1Database
 import json
 
@@ -14,6 +22,16 @@ def populate_database():
     wise = WiseScraperReal()
     wu = WesternUnionScraperReal()
     intermex = IntermexScraperReal()
+    
+    # Initialize Remitly scrapers
+    remitly_mx = RemitlyScraperMX()
+    remitly_co = RemitlyScraperCO()
+    remitly_br = RemitlyScraperBR()
+    remitly_ar = RemitlyScraperAR()
+    remitly_ve = RemitlyScraperVE()
+    remitly_cl = RemitlyScraperCL()
+    remitly_pe = RemitlyScraperPE()
+    remitly_bo = RemitlyScraperBO()
     
     db = RAGFIN1Database("ragfin1_data.db")
     
@@ -42,6 +60,34 @@ def populate_database():
     intermex_results = intermex.compare_corridors(corridors)
     all_results.extend(intermex_results)
     print(f"   ✅ {len(intermex_results)} records\n")
+    
+    print("✅ Remitly (REAL rates)...")
+    remitly_results = []
+    remitly_scrapers = {
+        'MX': remitly_mx,
+        'CO': remitly_co,
+        'BR': remitly_br,
+        'AR': remitly_ar,
+        'VE': remitly_ve,
+        'CL': remitly_cl,
+        'PE': remitly_pe,
+        'BO': remitly_bo
+    }
+    
+    for corridor in corridors:
+        dest = corridor['destination']
+        if dest in remitly_scrapers:
+            result = remitly_scrapers[dest].get_estimate(
+                corridor['origin'],
+                corridor['destination'],
+                corridor['amount']
+            )
+            if result:
+                result['success'] = True
+                remitly_results.append(result)
+    
+    all_results.extend(remitly_results)
+    print(f"   ✅ {len(remitly_results)} records\n")
     
     print("=" * 60)
     print("💾 Inserting into database...")

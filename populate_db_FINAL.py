@@ -36,11 +36,16 @@ def populate_database():
     db = RAGFIN1Database("ragfin1_data.db")
     
     corridors = [
-        {"origin": "US", "destination": "MX", "amount": 500},
-        {"origin": "US", "destination": "MX", "amount": 1000},
-        {"origin": "US", "destination": "CO", "amount": 500},
-        {"origin": "US", "destination": "VE", "amount": 500},
-    ]
+    {"origin": "US", "destination": "MX", "amount": 500},
+    {"origin": "US", "destination": "MX", "amount": 1000},
+    {"origin": "US", "destination": "CO", "amount": 500},
+    {"origin": "US", "destination": "BR", "amount": 500},
+    {"origin": "US", "destination": "AR", "amount": 500},
+    {"origin": "US", "destination": "VE", "amount": 500},
+    {"origin": "US", "destination": "CL", "amount": 500},
+    {"origin": "US", "destination": "PE", "amount": 500},
+    {"origin": "US", "destination": "BO", "amount": 500},
+]
     
     print(f"📊 Scraping {len(corridors)} corridors with REAL data...\n")
     

@@ -12,6 +12,9 @@ from remitly_scraper_VE import RemitlyScraperVE
 from remitly_scraper_CL import RemitlyScraperCL
 from remitly_scraper_PE import RemitlyScraperPE
 from remitly_scraper_BO import RemitlyScraperBO
+from remitly_scraper_GT import RemitlyScraperGT
+from remitly_scraper_DO import RemitlyScraperDO
+from remitly_scraper_SV import RemitlyScraperSV
 from ragfin1_db import RAGFIN1Database
 import json
 
@@ -32,20 +35,26 @@ def populate_database():
     remitly_cl = RemitlyScraperCL()
     remitly_pe = RemitlyScraperPE()
     remitly_bo = RemitlyScraperBO()
+    remitly_gt = RemitlyScraperGT()
+    remitly_do = RemitlyScraperDO()
+    remitly_sv = RemitlyScraperSV()
     
     db = RAGFIN1Database("ragfin1_data.db")
     
     corridors = [
-    {"origin": "US", "destination": "MX", "amount": 500},
-    {"origin": "US", "destination": "MX", "amount": 1000},
-    {"origin": "US", "destination": "CO", "amount": 500},
-    {"origin": "US", "destination": "BR", "amount": 500},
-    {"origin": "US", "destination": "AR", "amount": 500},
-    {"origin": "US", "destination": "VE", "amount": 500},
-    {"origin": "US", "destination": "CL", "amount": 500},
-    {"origin": "US", "destination": "PE", "amount": 500},
-    {"origin": "US", "destination": "BO", "amount": 500},
-]
+        {"origin": "US", "destination": "MX", "amount": 500},
+        {"origin": "US", "destination": "MX", "amount": 1000},
+        {"origin": "US", "destination": "CO", "amount": 500},
+        {"origin": "US", "destination": "BR", "amount": 500},
+        {"origin": "US", "destination": "AR", "amount": 500},
+        {"origin": "US", "destination": "VE", "amount": 500},
+        {"origin": "US", "destination": "CL", "amount": 500},
+        {"origin": "US", "destination": "PE", "amount": 500},
+        {"origin": "US", "destination": "BO", "amount": 500},
+        {"origin": "US", "destination": "GT", "amount": 500},
+        {"origin": "US", "destination": "DO", "amount": 500},
+        {"origin": "US", "destination": "SV", "amount": 500},
+    ]
     
     print(f"📊 Scraping {len(corridors)} corridors with REAL data...\n")
     
@@ -76,7 +85,10 @@ def populate_database():
         'VE': remitly_ve,
         'CL': remitly_cl,
         'PE': remitly_pe,
-        'BO': remitly_bo
+        'BO': remitly_bo,
+        'GT': remitly_gt,
+        'DO': remitly_do,
+        'SV': remitly_sv
     }
     
     for corridor in corridors:

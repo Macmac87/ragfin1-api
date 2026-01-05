@@ -1,7 +1,7 @@
 """
-RAGFIN1 FastAPI Application v2.0
+RAGFIN1 FastAPI Application v3.0
 """
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -21,7 +21,7 @@ CACHE_DURATION = 300
 
 load_dotenv()
 
-app = FastAPI(title="RAGFIN1 API", version="2.0.0")
+app = FastAPI(title="RAGFIN1 API", version="3.0.0")
 
 # Inicializar componentes
 crypto_scraper = CryptoRatesScraper()
@@ -35,6 +35,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ==================== CACHE-BUSTING MIDDLEWARE ====================
+@app.middleware("http")
+async def add_cache_control_headers(request: Request, call_next):
+    response = await call_next(request)
+    # No-cache para frontend y static files
+    if request.url.path.startswith("/static/") or request.url.path == "/" or not request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
 
 # ==================== MODELOS ====================
 
@@ -247,7 +258,7 @@ else:
 
 @app.on_event("startup")
 async def startup_event():
-    print("🚀 RAGFIN1 API v2.0 Starting...")
+    print("🚀 RAGFIN1 API v3.0 Starting...")
     print("✅ RAG Engine initialized")
 
     records = rag_engine.load_all_data()

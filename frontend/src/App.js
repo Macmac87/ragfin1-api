@@ -3,7 +3,8 @@ import {
   getCompetitiveAnalysis, 
   getCompetitiveInsight, 
   getBinanceP2P,
-  getCryptoRates 
+  getCryptoRates,
+  getCardPremiums
 } from './services/api';
 import './App.css';
 
@@ -16,6 +17,7 @@ function App() {
   const [insightData, setInsightData] = useState(null);
   const [binanceData, setBinanceData] = useState(null);
   const [cryptoData, setCryptoData] = useState(null);
+  const [cardPremiums, setCardPremiums] = useState(null);
 
   const corridors = [
   { code: 'MX', name: 'Mexico', currency: 'MXN', flag: '🇲🇽' },
@@ -45,13 +47,15 @@ function App() {
       getCompetitiveAnalysis(corridor).catch(() => null),
       getCompetitiveInsight(corridor).catch(() => null),
       getBinanceP2P(corridor, amountValue).catch(() => null),
-      getCryptoRates(curr?.currency || 'MXN').catch(() => null)
-    ]).then(([comp, insight, binance, crypto]) => {
+      getCryptoRates(curr?.currency || 'MXN').catch(() => null),
+      getCardPremiums(corridor).catch(() => null)
+    ]).then(([comp, insight, binance, crypto, premiums]) => {
       if (!cancelled) {
         setCompetitiveData(comp);
         setInsightData(insight);
         setBinanceData(binance);
         setCryptoData(crypto);
+        setCardPremiums(premiums);
         setLoading(false);
       }
     });
@@ -71,12 +75,14 @@ function App() {
       getCompetitiveAnalysis(corridor).catch(() => null),
       getCompetitiveInsight(corridor).catch(() => null),
       getBinanceP2P(corridor, amountValue).catch(() => null),
-      getCryptoRates(curr?.currency || 'MXN').catch(() => null)
-    ]).then(([comp, insight, binance, crypto]) => {
+      getCryptoRates(curr?.currency || 'MXN').catch(() => null),
+      getCardPremiums(corridor).catch(() => null)
+    ]).then(([comp, insight, binance, crypto, premiums]) => {
       setCompetitiveData(comp);
       setInsightData(insight);
       setBinanceData(binance);
       setCryptoData(crypto);
+      setCardPremiums(premiums);
       setLoading(false);
     });
   };
@@ -250,6 +256,33 @@ function App() {
               </div>
             ) : (
               <div className="no-data">NO DATA AVAILABLE</div>
+            )}
+          </section>
+
+          <section className="endpoint-section">
+            <div className="section-header">
+              <h2>ENDPOINT: /api/v1/card-premiums/{corridor}</h2>
+              <span className="badge">CARD PREMIUMS</span>
+            </div>
+            
+            {!cardPremiums ? (
+              <div className="no-data">NO DATA AVAILABLE</div>
+            ) : cardPremiums?.premiums ? (
+              <div className="content">
+                <div className="premiums-grid">
+                  {Object.entries(cardPremiums.premiums)
+                    .sort((a, b) => parseFloat(a[1]) - parseFloat(b[1]))
+                    .map(([provider, premium]) => (
+                      <div key={provider} className="premium-card">
+                        <div className="premium-provider">{provider}</div>
+                        <div className="premium-value">{premium}%</div>
+                        <div className="premium-label">Card Premium</div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ) : (
+              <div className="no-data">{cardPremiums?.error || 'Card premiums data unavailable'}</div>
             )}
           </section>
 

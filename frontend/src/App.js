@@ -88,7 +88,7 @@ function App() {
           <div className="logo">
             RAGFIN<span className="accent">1</span>
           </div>
-          <div className="version">v.3.0</div>
+          <div className="version">v3.1.0</div>
         </div>
         
         <div className="controls">

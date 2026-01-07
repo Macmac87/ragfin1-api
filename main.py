@@ -1,5 +1,5 @@
 """
-RAGFIN1 FastAPI Application v3.0
+RAGFIN1 FastAPI Application v3.1.0
 """
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,7 +21,7 @@ CACHE_DURATION = 300
 
 load_dotenv()
 
-app = FastAPI(title="RAGFIN1 API", version="3.0.0")
+app = FastAPI(title="RAGFIN1 API", version="3.1.0")
 
 # Inicializar componentes
 crypto_scraper = CryptoRatesScraper()
@@ -275,7 +275,7 @@ else:
 
 @app.on_event("startup")
 async def startup_event():
-    print("🚀 RAGFIN1 API v3.1 Starting...")
+    print("🚀 RAGFIN1 API v3.1.0 Starting...")
     print("✅ RAG Engine initialized")
 
     records = rag_engine.load_all_data()

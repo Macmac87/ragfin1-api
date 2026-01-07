@@ -228,6 +228,23 @@ async def get_binance_p2p_rate(destination: str, amount: float = 1000):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# ==================== CARD PREMIUMS ENDPOINT ====================
+from card_scrapers import get_all_card_premiums
+
+@app.get("/api/v1/card-premiums/{country}")
+async def get_card_premiums(country: str, amount: int = 500):
+    """
+    Get card payment premiums for all 11 LATAM countries
+    Shows cost comparison: Bank Transfer vs Debit Card vs Credit Card
+    Supported: BR, MX, CO, PE, CL, AR, VE, BO, SV, DO, GT
+    """
+    try:
+        country_upper = country.upper()
+        data = get_all_card_premiums(country_upper, amount)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ==================== STATIC FILES & FRONTEND ====================
 
 # Montar archivos estáticos del frontend
@@ -258,7 +275,7 @@ else:
 
 @app.on_event("startup")
 async def startup_event():
-    print("🚀 RAGFIN1 API v3.0 Starting...")
+    print("🚀 RAGFIN1 API v3.1 Starting...")
     print("✅ RAG Engine initialized")
 
     records = rag_engine.load_all_data()
@@ -273,6 +290,8 @@ async def startup_event():
         print(f"✅ Crypto coverage: USDT {usdt_cov}%, USDC {usdc_cov}%")
     except Exception as e:
         print(f"⚠️ Crypto scraper warning: {e}")
+    
+    print("✅ Card premiums available for 11 countries")
     
     # Check if frontend is available
     if os.path.exists(static_path):

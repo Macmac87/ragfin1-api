@@ -5,11 +5,13 @@ import ChartSection from './components/ChartSection';
 import DataTable from './components/DataTable';
 import AIInsights from './components/AIInsights';
 import Actions from './components/Actions';
+import CardPremiums from './components/CardPremiums';
 import { getCompetitiveInsight } from './services/api';
 import { DEFAULT_CORRIDOR } from './config';
 
 function App() {
   const [corridor, setCorridor] = useState(DEFAULT_CORRIDOR);
+  const [amount, setAmount] = useState(500);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,6 +41,10 @@ function App() {
     setCorridor(newCorridor);
   };
 
+  const handleAmountChange = (newAmount) => {
+    setAmount(newAmount);
+  };
+
   const handleRefresh = () => {
     fetchData(corridor);
   };
@@ -48,7 +54,9 @@ function App() {
       <div style={styles.container}>
         <Header 
           corridor={corridor}
+          amount={amount}
           onCorridorChange={handleCorridorChange}
+          onAmountChange={handleAmountChange}
           lastUpdated={lastUpdated || 'Loading...'}
         />
 
@@ -68,6 +76,18 @@ function App() {
             <StatsGrid data={data} />
             <ChartSection data={data} />
             <DataTable data={data} />
+            
+            {/* CARD PREMIUMS SECTION */}
+            <div className="endpoint-section card-premiums">
+              <div className="section-header">
+                <h2>💳 CARD PAYMENT PREMIUMS</h2>
+                <span className="badge card-premiums">PAYMENT METHODS</span>
+              </div>
+              <div className="content">
+                <CardPremiums country={corridor} amount={amount} />
+              </div>
+            </div>
+
             <AIInsights data={data} />
             <Actions onRefresh={handleRefresh} loading={loading} />
           </>
@@ -116,7 +136,7 @@ const styles = {
     borderRadius: '6px',
     fontSize: '14px',
     fontWeight: '600',
-    cursor: 'pointer'
+    cursor: pointer'
   },
   footer: {
     textAlign: 'center',

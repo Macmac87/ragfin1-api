@@ -267,18 +267,28 @@ function App() {
             
             {!cardPremiums ? (
               <div className="no-data">NO DATA AVAILABLE</div>
-            ) : cardPremiums?.premiums ? (
+            ) : cardPremiums?.providers ? (
               <div className="content">
                 <div className="premiums-grid">
-                  {Object.entries(cardPremiums.premiums)
-                    .sort((a, b) => parseFloat(a[1]) - parseFloat(b[1]))
-                    .map(([provider, premium]) => (
-                      <div key={provider} className="premium-card">
-                        <div className="premium-provider">{provider}</div>
-                        <div className="premium-value">{premium}%</div>
-                        <div className="premium-label">Card Premium</div>
+                  {cardPremiums.providers.map((provider) => (
+                    <div key={provider.name} className="premium-card">
+                      <div className="premium-provider">{provider.name}</div>
+                      
+                      <div className="payment-method-item">
+                        <div className="method-name">💳 Debit Card</div>
+                        <div className="premium-value">{provider.debit_card.premium_pct.toFixed(1)}%</div>
+                        <div className="premium-label">Premium vs Bank</div>
+                        <div className="method-comparison">{provider.debit_card.vs_bank}</div>
                       </div>
-                    ))}
+                      
+                      <div className="payment-method-item" style={{marginTop: '15px'}}>
+                        <div className="method-name">💳 Credit Card</div>
+                        <div className="premium-value">{provider.credit_card.premium_pct.toFixed(1)}%</div>
+                        <div className="premium-label">Premium vs Bank</div>
+                        <div className="method-comparison">{provider.credit_card.vs_bank}</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : (

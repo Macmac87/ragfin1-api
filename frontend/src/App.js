@@ -3,8 +3,7 @@ import {
   getCompetitiveAnalysis, 
   getCompetitiveInsight, 
   getBinanceP2P,
-  getCryptoRates,
-  getCardPremiums
+  getCryptoRates 
 } from './services/api';
 import './App.css';
 
@@ -17,7 +16,6 @@ function App() {
   const [insightData, setInsightData] = useState(null);
   const [binanceData, setBinanceData] = useState(null);
   const [cryptoData, setCryptoData] = useState(null);
-  const [cardPremiums, setCardPremiums] = useState(null);
 
   const corridors = [
   { code: 'MX', name: 'Mexico', currency: 'MXN', flag: '🇲🇽' },
@@ -47,15 +45,13 @@ function App() {
       getCompetitiveAnalysis(corridor).catch(() => null),
       getCompetitiveInsight(corridor).catch(() => null),
       getBinanceP2P(corridor, amountValue).catch(() => null),
-      getCryptoRates(curr?.currency || 'MXN').catch(() => null),
-      getCardPremiums(corridor).catch(() => null)
-    ]).then(([comp, insight, binance, crypto, premiums]) => {
+      getCryptoRates(curr?.currency || 'MXN').catch(() => null)
+    ]).then(([comp, insight, binance, crypto]) => {
       if (!cancelled) {
         setCompetitiveData(comp);
         setInsightData(insight);
         setBinanceData(binance);
         setCryptoData(crypto);
-        setCardPremiums(premiums);
         setLoading(false);
       }
     });
@@ -75,14 +71,12 @@ function App() {
       getCompetitiveAnalysis(corridor).catch(() => null),
       getCompetitiveInsight(corridor).catch(() => null),
       getBinanceP2P(corridor, amountValue).catch(() => null),
-      getCryptoRates(curr?.currency || 'MXN').catch(() => null),
-      getCardPremiums(corridor).catch(() => null)
-    ]).then(([comp, insight, binance, crypto, premiums]) => {
+      getCryptoRates(curr?.currency || 'MXN').catch(() => null)
+    ]).then(([comp, insight, binance, crypto]) => {
       setCompetitiveData(comp);
       setInsightData(insight);
       setBinanceData(binance);
       setCryptoData(crypto);
-      setCardPremiums(premiums);
       setLoading(false);
     });
   };
@@ -94,7 +88,7 @@ function App() {
           <div className="logo">
             RAGFIN<span className="accent">1</span>
           </div>
-          <div className="version">v3.1.0</div>
+          <div className="version">v.3.0</div>
         </div>
         
         <div className="controls">
@@ -256,43 +250,6 @@ function App() {
               </div>
             ) : (
               <div className="no-data">NO DATA AVAILABLE</div>
-            )}
-          </section>
-
-          <section className="endpoint-section">
-            <div className="section-header">
-              <h2>ENDPOINT: /api/v1/card-premiums/{corridor}</h2>
-              <span className="badge">CARD PREMIUMS</span>
-            </div>
-            
-            {!cardPremiums ? (
-              <div className="no-data">NO DATA AVAILABLE</div>
-            ) : cardPremiums?.providers ? (
-              <div className="content">
-                <div className="premiums-grid">
-                  {cardPremiums.providers.map((provider) => (
-                    <div key={provider.name} className="premium-card">
-                      <div className="premium-provider">{provider.name}</div>
-                      
-                      <div className="payment-method-item">
-                        <div className="method-name">💳 Debit Card</div>
-                        <div className="premium-value">{provider.debit_card.premium_pct.toFixed(1)}%</div>
-                        <div className="premium-label">Premium vs Bank</div>
-                        <div className="method-comparison">{provider.debit_card.vs_bank}</div>
-                      </div>
-                      
-                      <div className="payment-method-item" style={{marginTop: '15px'}}>
-                        <div className="method-name">💳 Credit Card</div>
-                        <div className="premium-value">{provider.credit_card.premium_pct.toFixed(1)}%</div>
-                        <div className="premium-label">Premium vs Bank</div>
-                        <div className="method-comparison">{provider.credit_card.vs_bank}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="no-data">{cardPremiums?.error || 'Card premiums data unavailable'}</div>
             )}
           </section>
 

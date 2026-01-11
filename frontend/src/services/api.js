@@ -37,12 +37,6 @@ export const getCryptoRates = async (currencies) => {
   return response.data;
 };
 
-// Card Premiums
-export const getCardPremiums = async (destination) => {
-  const response = await api.get(`/api/v1/card-premiums/${destination}`);
-  return response.data;
-};
-
 // Health Check
 export const healthCheck = async () => {
   const response = await api.get('/health');

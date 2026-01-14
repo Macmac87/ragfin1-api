@@ -1,5 +1,5 @@
 """
-RAGFIN1 FastAPI Application v3.1.0
+RAGFIN1 FastAPI Application v3.2.0
 """
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,7 +21,7 @@ CACHE_DURATION = 300
 
 load_dotenv()
 
-app = FastAPI(title="RAGFIN1 API", version="3.1.0")
+app = FastAPI(title="RAGFIN1 API", version="3.2.0")
 
 # Inicializar componentes
 crypto_scraper = CryptoRatesScraper()
@@ -61,7 +61,6 @@ class CompareRequest(BaseModel):
 
 # ==================== ENDPOINTS BÁSICOS ====================
 
-
 @app.get("/health")
 async def health():
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
@@ -100,6 +99,7 @@ async def competitive_insight(destination: str):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/v1/rag/compare")
 async def compare_providers(request: CompareRequest):
     try:
@@ -187,7 +187,10 @@ async def compare_traditional_vs_crypto(destination: str, amount: float = 1000):
 
         currency_map = {
             "MX": "MXN", "CO": "COP", "VE": "VES", "BR": "BRL",
-            "CL": "CLP", "AR": "ARS", "PE": "PEN", "BO": "BOB"
+            "CL": "CLP", "AR": "ARS", "PE": "PEN", "BO": "BOB",
+            "GT": "GTQ", "HN": "HNL", "SV": "USD", "NI": "NIO",
+            "CR": "CRC", "PA": "USD", "DO": "DOP", "EC": "USD",
+            "PY": "PYG", "UY": "UYU"
         }
 
         currency = currency_map.get(destination, destination)
@@ -234,9 +237,8 @@ from card_scrapers import get_all_card_premiums
 @app.get("/api/v1/card-premiums/{country}")
 async def get_card_premiums(country: str, amount: int = 500):
     """
-    Get card payment premiums for all 11 LATAM countries
+    Get card payment premiums for all LATAM countries
     Shows cost comparison: Bank Transfer vs Debit Card vs Credit Card
-    Supported: BR, MX, CO, PE, CL, AR, VE, BO, SV, DO, GT
     """
     try:
         country_upper = country.upper()
@@ -244,6 +246,38 @@ async def get_card_premiums(country: str, amount: int = 500):
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== ADMIN ENDPOINT ====================
+@app.get("/admin/force-repopulate")
+async def force_repopulate():
+    """Emergency endpoint to repopulate database with fresh data"""
+    try:
+        import subprocess
+        if os.path.exists("ragfin1_data.db"):
+            os.remove("ragfin1_data.db")
+        
+        # Run populate script
+        result = subprocess.run(
+            ["python", "populate_massive.py"],
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode == 0:
+            # Reload RAG engine data
+            rag_engine.load_all_data()
+            return {
+                "status": "success",
+                "message": "Database repopulated successfully",
+                "records": len(rag_engine.load_all_data())
+            }
+        else:
+            return {
+                "status": "error",
+                "message": f"Populate script failed: {result.stderr}"
+            }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 # ==================== STATIC FILES & FRONTEND ====================
 
@@ -258,8 +292,8 @@ if os.path.exists(static_path):
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
         # Si la ruta empieza con /api/, dejar que FastAPI la maneje
-        if full_path.startswith("api/"):
-            raise HTTPException(status_code=404, detail="API endpoint not found")
+        if full_path.startswith("api/") or full_path.startswith("admin/"):
+            raise HTTPException(status_code=404, detail="Endpoint not found")
         
         # Para cualquier otra ruta, servir el index.html del frontend
         index_file = os.path.join(static_path, "index.html")
@@ -275,7 +309,7 @@ else:
 
 @app.on_event("startup")
 async def startup_event():
-    print("🚀 RAGFIN1 API v3.1.0 Starting...")
+    print("🚀 RAGFIN1 API v3.2.0 Starting...")
     print("✅ RAG Engine initialized")
 
     records = rag_engine.load_all_data()
@@ -291,13 +325,21 @@ async def startup_event():
     except Exception as e:
         print(f"⚠️ Crypto scraper warning: {e}")
     
-    print("✅ Card premiums available for 11 countries")
+    print("✅ Card premiums available for 18 countries")
     
     # Check if frontend is available
     if os.path.exists(static_path):
         print(f"✅ Frontend build found and mounted")
     else:
         print(f"⚠️  Frontend build not found - API only mode")
+    
+    # Start auto-update scheduler in background thread
+    import threading
+    from update_rates_scheduler import start_scheduler
+    
+    scheduler_thread = threading.Thread(target=start_scheduler, daemon=True)
+    scheduler_thread.start()
+    print("✅ Auto-update scheduler started (24-hour cycle)")
 
 # ==================== MAIN ====================
 

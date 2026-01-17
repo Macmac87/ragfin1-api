@@ -217,22 +217,22 @@ function App() {
               <div className="content">
                 <div className="stats-row">
                   <div className="stat-box crypto">
-                    <div className="stat-label">BINANCE P2P RATE</div>
-                    <div className="stat-value">{binanceData.data.exchange_rate} {currentCorridor?.currency}</div>
-                    <div className="stat-detail">1 USD = {binanceData.data.exchange_rate} {currentCorridor?.currency}</div>
-                  </div>
+  <div className="stat-label">BINANCE P2P RATE</div>
+  <div className="stat-value">{binanceData.data.p2p_rate?.price} {currentCorridor?.currency}</div>
+  <div className="stat-detail">1 USD = {binanceData.data.p2p_rate?.price} {currentCorridor?.currency}</div>
+</div>
                   
                   <div className="stat-box">
                     <div className="stat-label">RECIPIENT RECEIVES</div>
                     <div className="stat-value">
-                      {binanceData.data.recipient_receives ? binanceData.data.recipient_receives.toLocaleString() : '0'} {currentCorridor?.currency}
-                    </div>
+  {binanceData.data.p2p_rate?.crypto_received ? (binanceData.data.p2p_rate.crypto_received * binanceData.data.p2p_rate.price * (amount/binanceData.data.p2p_rate.send_amount)).toLocaleString() : '0'} {currentCorridor?.currency}
+</div>
                     <div className="stat-detail">For ${amount || 1000} USD</div>
                   </div>
                   
                   <div className="stat-box">
                     <div className="stat-label">FEE</div>
-                    <div className="stat-value">${binanceData.data.fee}</div>
+                    <div className="stat-value">${binanceData.data.p2p_rate?.fee || 0}</div>
                     <div className="stat-detail">No transfer fee</div>
                   </div>
                 </div>

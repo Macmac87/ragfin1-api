@@ -333,13 +333,7 @@ async def startup_event():
     else:
         print(f"⚠️  Frontend build not found - API only mode")
     
-    # Start auto-update scheduler in background thread
-    import threading
-    from update_rates_scheduler import start_scheduler
     
-    scheduler_thread = threading.Thread(target=start_scheduler, daemon=True)
-    scheduler_thread.start()
-    print("✅ Auto-update scheduler started (24-hour cycle)")
 
 # ==================== MAIN ====================
 

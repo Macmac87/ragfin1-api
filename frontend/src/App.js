@@ -3,7 +3,8 @@ import {
   getCompetitiveAnalysis, 
   getCompetitiveInsight, 
   getBinanceP2P,
-  getCryptoRates 
+  getCryptoRates,
+  getCardPremiums
 } from './services/api';
 import './App.css';
 
@@ -16,6 +17,7 @@ function App() {
   const [insightData, setInsightData] = useState(null);
   const [binanceData, setBinanceData] = useState(null);
   const [cryptoData, setCryptoData] = useState(null);
+  const [cardPremiums, setCardPremiums] = useState(null);
 
   const corridors = [
   { code: 'MX', name: 'Mexico', currency: 'MXN', flag: '🇲🇽' },
@@ -45,13 +47,15 @@ function App() {
       getCompetitiveAnalysis(corridor).catch(() => null),
       getCompetitiveInsight(corridor).catch(() => null),
       getBinanceP2P(corridor, amountValue).catch(() => null),
-      getCryptoRates(curr?.currency || 'MXN').catch(() => null)
-    ]).then(([comp, insight, binance, crypto]) => {
+      getCryptoRates(curr?.currency || 'MXN').catch(() => null),
+      getCardPremiums(corridor, amountValue).catch(() => null)
+    ]).then(([comp, insight, binance, crypto, premiums]) => {
       if (!cancelled) {
         setCompetitiveData(comp);
         setInsightData(insight);
         setBinanceData(binance);
         setCryptoData(crypto);
+        setCardPremiums(premiums);
         setLoading(false);
       }
     });
@@ -60,7 +64,7 @@ function App() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [corridor]);
+  }, [corridor, amount]);
 
   const handleRefresh = () => {
     setLoading(true);
@@ -71,12 +75,14 @@ function App() {
       getCompetitiveAnalysis(corridor).catch(() => null),
       getCompetitiveInsight(corridor).catch(() => null),
       getBinanceP2P(corridor, amountValue).catch(() => null),
-      getCryptoRates(curr?.currency || 'MXN').catch(() => null)
-    ]).then(([comp, insight, binance, crypto]) => {
+      getCryptoRates(curr?.currency || 'MXN').catch(() => null),
+      getCardPremiums(corridor, amountValue).catch(() => null)
+    ]).then(([comp, insight, binance, crypto, premiums]) => {
       setCompetitiveData(comp);
       setInsightData(insight);
       setBinanceData(binance);
       setCryptoData(crypto);
+      setCardPremiums(premiums);
       setLoading(false);
     });
   };
@@ -88,7 +94,7 @@ function App() {
           <div className="logo">
             RAGFIN<span className="accent">1</span>
           </div>
-          <div className="version">v.3.0</div>
+          <div className="version">v3.2.0</div>
         </div>
         
         <div className="controls">
@@ -207,47 +213,85 @@ function App() {
 
           <section className="endpoint-section">
             <div className="section-header">
+              <h2>ENDPOINT: /api/v1/card-premiums/{corridor}?amount={amount || 1000}</h2>
+              <span className="badge premium">CARD PREMIUMS</span>
+            </div>
+            
+            {!cardPremiums ? (
+              <div className="no-data">NO DATA AVAILABLE</div>
+            ) : cardPremiums?.providers ? (
+              <div className="content">
+                <div className="premiums-container">
+                  {cardPremiums.providers.map((provider, idx) => (
+                    <div key={idx} className="provider-premium-card">
+                      <div className="provider-name">{provider.name}</div>
+                      
+                      <div className="payment-methods-grid">
+                        <div className="payment-method bank">
+                          <div className="method-label">Bank Transfer</div>
+                          <div className="method-cost">${provider.bank_transfer.total_cost.toFixed(2)}</div>
+                          <div className="method-detail">{provider.bank_transfer.method}</div>
+                        </div>
+                        
+                        <div className="payment-method debit">
+                          <div className="method-label">Debit Card</div>
+                          <div className="method-cost">${provider.debit_card.total_cost.toFixed(2)}</div>
+                          <div className="premium-badge debit">
+                            +{provider.debit_card.premium_pct}% ({provider.debit_card.vs_bank})
+                          </div>
+                        </div>
+                        
+                        <div className="payment-method credit">
+                          <div className="method-label">Credit Card</div>
+                          <div className="method-cost">${provider.credit_card.total_cost.toFixed(2)}</div>
+                          <div className="premium-badge credit">
+                            +{provider.credit_card.premium_pct}% ({provider.credit_card.vs_bank})
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="no-data">NO DATA AVAILABLE</div>
+            )}
+          </section>
+
+          <section className="endpoint-section">
+            <div className="section-header">
               <h2>ENDPOINT: /api/v1/binance-p2p/{corridor}?amount={amount || 1000}</h2>
               <span className="badge crypto">CRYPTO P2P</span>
             </div>
             
             {!binanceData ? (
               <div className="no-data">NO DATA AVAILABLE</div>
-            ) : binanceData?.data ? (
+            ) : binanceData?.data?.p2p_rate ? (
               <div className="content">
                 <div className="stats-row">
                   <div className="stat-box crypto">
-  <div className="stat-label">BINANCE P2P RATE</div>
-  <div className="stat-value">{binanceData.data.p2p_rate?.price} {currentCorridor?.currency}</div>
-  <div className="stat-detail">1 USD = {binanceData.data.p2p_rate?.price} {currentCorridor?.currency}</div>
-</div>
+                    <div className="stat-label">BINANCE P2P RATE</div>
+                    <div className="stat-value">{binanceData.data.p2p_rate.price} {currentCorridor?.currency}</div>
+                    <div className="stat-detail">1 USD = {binanceData.data.p2p_rate.price} {currentCorridor?.currency}</div>
+                  </div>
                   
                   <div className="stat-box">
-                    <div className="stat-label">RECIPIENT RECEIVES</div>
+                    <div className="stat-label">CRYPTO RECEIVED</div>
                     <div className="stat-value">
-  {binanceData.data.p2p_rate?.crypto_received ? (binanceData.data.p2p_rate.crypto_received * binanceData.data.p2p_rate.price * (amount/binanceData.data.p2p_rate.send_amount)).toLocaleString() : '0'} {currentCorridor?.currency}
-</div>
+                      {binanceData.data.p2p_rate.crypto_received ? binanceData.data.p2p_rate.crypto_received.toFixed(4) : '0'} {binanceData.data.p2p_rate.crypto}
+                    </div>
                     <div className="stat-detail">For ${amount || 1000} USD</div>
                   </div>
                   
                   <div className="stat-box">
                     <div className="stat-label">FEE</div>
-                    <div className="stat-value">${binanceData.data.p2p_rate?.fee || 0}</div>
+                    <div className="stat-value">${binanceData.data.p2p_rate.fee || 0}</div>
                     <div className="stat-detail">No transfer fee</div>
                   </div>
                 </div>
-
-                {binanceData.data.payment_methods && binanceData.data.payment_methods.length > 0 && (
-                  <div className="payment-methods">
-                    <div className="pm-label">PAYMENT METHODS AVAILABLE:</div>
-                    <div className="pm-list">
-                      {binanceData.data.payment_methods.slice(0, 8).map((pm, idx) => (
-                        <span key={idx} className="pm-badge">{pm.tradeMethodName || pm.payType}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
+            ) : binanceData?.data?.error ? (
+              <div className="no-data">BINANCE P2P: {binanceData.data.error}</div>
             ) : (
               <div className="no-data">NO DATA AVAILABLE</div>
             )}

@@ -30,7 +30,14 @@ function App() {
   { code: 'BO', name: 'Bolivia', currency: 'BOB', flag: '🇧🇴' },
   { code: 'GT', name: 'Guatemala', currency: 'GTQ', flag: '🇬🇹' },
   { code: 'DO', name: 'Dominican Republic', currency: 'DOP', flag: '🇩🇴' },
-  { code: 'SV', name: 'El Salvador', currency: 'USD', flag: '🇸🇻' }
+  { code: 'SV', name: 'El Salvador', currency: 'USD', flag: '🇸🇻' },
+  { code: 'HN', name: 'Honduras', currency: 'HNL', flag: '🇭🇳' },
+  { code: 'NI', name: 'Nicaragua', currency: 'NIO', flag: '🇳🇮' },
+  { code: 'CR', name: 'Costa Rica', currency: 'CRC', flag: '🇨🇷' },
+  { code: 'PY', name: 'Paraguay', currency: 'PYG', flag: '🇵🇾' },
+  { code: 'UY', name: 'Uruguay', currency: 'UYU', flag: '🇺🇾' },
+  { code: 'EC', name: 'Ecuador', currency: 'USD', flag: '🇪🇨' },
+  { code: 'PA', name: 'Panama', currency: 'PAB', flag: '🇵🇦' }
 ];
 
   const currentCorridor = corridors.find(c => c.code === corridor);
